@@ -31,7 +31,7 @@
 #'   \code{matrix}. The output has the same class of the input \code{x}.
 #' @export
 #'
-#' @include allClass.R
+#' @include TreeSummarizedExperiment-class.R
 #' @author Ruizhu HUANG
 #' @seealso \code{\link{TreeSummarizedExperiment}}
 #' @examples
@@ -76,8 +76,8 @@
 #'
 #' assays(aggCol)[[1]]
 #'
-aggValue <- function(x, rowLevel = NULL, rowBlock = NULL, 
-                     colLevel = NULL, colBlock = NULL, 
+aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
+                     colLevel = NULL, colBlock = NULL,
                      FUN = sum, assay = NULL,
                      message = FALSE) {
     ## --------------------- check input before run ---------------------------
@@ -86,7 +86,7 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
     if (!is(x, "TreeSummarizedExperiment")) {
         stop("x should be a TreeSummarizedExperiment")
     }
-    
+
     ## The provided rowLevel or colLevel should be a numeric or character vector
     isR <- (is.character(rowLevel) | is.numeric(rowLevel) |
                 is.null(rowLevel))
@@ -98,20 +98,20 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
     if (!isC) {
         stop("colLevel should be a numeric or character vector. \n")
     }
-    
+
     ## ---------------------- get all data ready ------------------------------
     if (message) {message("Preparing data... ")}
-    
+
     ## The assay tables
     mat <- assays(x)
     if (!is.null(assay)) {
         mat <- mat[assay]
     }
-    
+
     ## The trees
     rTree <- rowTree(x)
     cTree <- colTree(x)
-    
+
     ## Indicate whether aggregation should be on rows or columns
     if (is.null(rowLevel)) {
         onRow <- FALSE
@@ -119,32 +119,32 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
         if (is.null(rTree)) {
             stop("The tree on rows doesn't exist.")
         }
-        
+
         onRow <- TRUE
         if (message) {
             message("Perform aggregation on the row dimension... ")
         }
     }
-    
+
     if (is.null(colLevel)) {
         onCol <- FALSE
     } else {
         if (is.null(cTree)) {
             stop("The tree on columns doesn't exist.")
         }
-        
+
         onCol <- TRUE
         if (message) {
             message("Perform aggregation on the column dimension... ")
         }
     }
-    
+
     ## -------------------- aggregation on row dimension ----------------------
     if (onRow) {
         if (message) {
             message("The row aggregation is using ", deparse(substitute(FUN)))
         }
-        
+
         rD <- rowData(x)
         rL <- rowLinks(x)
         outR <- .aggFun(tree = rTree,
@@ -167,7 +167,7 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
             nrL <- NULL
         }
     }
-    
+
     ## -------------------- aggregation on column dimension ----------------
     if (onCol) {
         if (message) {
@@ -189,12 +189,12 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
         mat <- lapply(outC$dataTab, t)
     } else {
         ncD <- colData(x)
-        
+
         if (!is.null(cTree)) {
             ncL <- colLinks(x)$nodeLab
         } else {ncL <- NULL}
     }
-    
+
     # metadata
     metaD <- metadata(x)
     # create the new TreeSummarizedExperiment object
@@ -206,37 +206,37 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
                                     colTree = cTree,
                                     colNodeLab = ncL,
                                     metadata = metaD)
-    
+
     return(out)
 }
 
 ########################### version 2 ##############################
 
 .aggFun <- function(tree, assayTab, dimData, linkData,
-                    level = NULL, block = NULL, FUN, 
+                    level = NULL, block = NULL, FUN,
                     message = FALSE) {
-    
+
     # nodeNum & block
     numR <- linkData$nodeNum
     if (!is.null(block)) {
-        bk <- dimData[[block]]  
+        bk <- dimData[[block]]
     } else {
         bk <- rep(1, length(numR))
     }
-    
+
     nodeBk <- data.frame(numR, bk, stringsAsFactors = FALSE)
-    
-    
+
+
     # All node numbers on the tree
     ed <- tree$edge
     numAR <- unique(as.vector(ed))
-    
+
     # The aggregation level
     if (is.character(level)) {
         level <- convertNode(tree = tree, node = level,
                            use.alias = FALSE, message = FALSE)
     }
-    
+
     # The descendants of the aggregation level
     if (is.null(tree$cache)) {
         desR <- findDescendant(tree = tree, node = level,
@@ -248,28 +248,28 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
         names(desR) <- convertNode(tree = tree, node = level,
                                  use.alias = TRUE, message = FALSE)
     }
-    
+
     # Find the rows of the descendants
     miR <- setdiff(unique(unlist(desR)), numR)
     if (length(miR)) {
-        warning(length(miR), 
+        warning(length(miR),
                 " leaves couldn't be found from the assay table.\n")
         miR <- convertNode(tree = tree, node = miR,
                          use.alias = FALSE, message = FALSE)
         warning("Missing leaves: ", paste(head(miR), collapse = " "), " ...")
     }
-    
+
     ## Perform the aggregation
     # on the assay tables
-    
+
     if (message) {
         message("Working on the assays table... ")}
-    
+
     # aggregate all assay tables together
     nc <- ncol(assayTab[[1]])
     ncn <- colnames(assayTab[[1]])
     mtab <- do.call(cbind, assayTab)
-    
+
     assayL <- annL <- vector("list", length(desR))
     ll <- rep(NA, length(desR))
     for (i in seq_along(desR)) {
@@ -278,11 +278,11 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
                     " finished", "\r", appendLF = FALSE)
             flush.console()
         }
-        
+
         # assay table
         ri <- which(numR %in% desR[[i]])
         sri <- split(ri, nodeBk[ri, "bk"])
-        
+
         ax <- lapply(sri, FUN = function(x) {
             xx <- mtab[x, , drop = FALSE]
             fx <- apply(xx, 2, FUN = FUN)
@@ -290,13 +290,13 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
             rownames(fx) <- NULL
             fx
         })
-        
+
         assayL[[i]] <- do.call(rbind, ax)
-        
+
         #dimension data
         li <- lapply(ax, nrow)
         ll[[i]] <- sum(unlist(li))
-        
+
         if (ncol(dimData)) {
             dl <- lapply(sri, FUN = function(x) {
                 if (!length(x)) {
@@ -312,11 +312,11 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
             ru <- mapply(.rep_df, df = dl, n=li, SIMPLIFY = FALSE)
             annL[[i]] <- do.call(rbind, ru)
         }}
-    
+
     # separate the results into the original number of assays tables as input
     if (message) {
         message("unwrap data ... ")}
-    
+
     assayL <- do.call(rbind, assayL)
     outR <- vector("list", length(assayTab))
     names(outR) <- names(assayTab)
@@ -326,18 +326,18 @@ aggValue <- function(x, rowLevel = NULL, rowBlock = NULL,
         colnames(rii) <- ncn
         outR[[i]] <- rii
     }
-    
+
     # use the same row names as outR
     if (ncol(dimData)) {
         newDD <- do.call(rbind, annL)
     } else {
         newDD <- dimData[rep(1, sum(ll)), , drop = FALSE]
     }
-    
+
     newDD$nodeLab <- rep(names(desR), ll)
     newDD <- DataFrame(newDD)
     rownames(newDD) <- rep(names(desR), ll)
-    
+
     out <- list(dataTab = outR, newDD = newDD)
     return(out)
 }

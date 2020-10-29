@@ -37,14 +37,13 @@ Suggests:
     testthat
 RoxygenNote: 7.1.1
 Collate: 
+    'TreeSummarizedExperiment-validity.R'
+    'TreeSummarizedExperiment-class.R'
+    'TreeSummarizedExperiment-methods.R'
     'aboutLoop.R'
-    'classValid.R'
-    'allClass.R'
-    'coercion.R'
     'aggValue.R'
-    'allGenerics.R'
     'changeTree.R'
-    'classAccessor.R'
+    'coercion.R'
     'data.R'
     'deprecate_Fun.R'
     'tree_addLabel.R'

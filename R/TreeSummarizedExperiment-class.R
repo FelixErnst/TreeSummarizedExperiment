@@ -188,7 +188,7 @@ setClass("TreeSummarizedExperiment",
 #' @importFrom S4Vectors DataFrame
 #' @importFrom methods new is as
 #' @export
-#' @include classValid.R
+#' @include TreeSummarizedExperiment-validity.R
 #' @return a TreeSummarizedExperiment object
 #' @name TreeSummarizedExperiment-constructor
 #' @author Ruizhu HUANG
@@ -235,7 +235,7 @@ TreeSummarizedExperiment <- function(..., rowTree = NULL, colTree = NULL,
         }
     }
 
-    
+
     # -------------------------------------------------------------------------
     ## create a SummarizedExperiment object
     sce <- SingleCellExperiment(...)
@@ -245,7 +245,7 @@ TreeSummarizedExperiment <- function(..., rowTree = NULL, colTree = NULL,
     ## columns of assay tables
     isRow <- !is.null(rowTree)
     isCol <- !is.null(colTree)
-    
+
     # # if not tree information are given, return a SingleCellExperiment
     # if(!isRow && !isCol){
     #     return(sce)
@@ -348,13 +348,13 @@ TreeSummarizedExperiment <- function(..., rowTree = NULL, colTree = NULL,
     # decide whether treeLab or treeLab_alias should be used
     sw <- startsWith(lab, "alias_")
     sw <- all(sw)
-    
+
     sw2 <- startsWith(treeLab, "alias_")
     notALL <- !all(sw2)
     if (any(sw2) & notALL) {
         warning("The tree has some node labels starting with 'alias_'. ")
     }
-    
+
     # Match lab with the alias of the node labels on the tree
     # Unless all node labels start with 'alias_'
     if (sw & notALL) {
@@ -393,7 +393,7 @@ TreeSummarizedExperiment <- function(..., rowTree = NULL, colTree = NULL,
                        nodeLab_alias = faLab,
                        nodeNum = nd,
                        isLeaf = nd %in% leaf)
-    
+
     rownames(linkD) <- rn
 
     out <- list(link = linkD, isKeep = isIn)
